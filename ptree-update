@@ -48,12 +48,12 @@ if ! $(mount | grep -q " $TMPFS .* tmpfs "); then
 	return 1;
 fi
 
-
-
-# make sure the old squashfs image is mounted
-if ! $(grep -q "$SQUASH_SOURCE" /proc/mounts); then
-	run mount -o ro "$SQUASH_SOURCE" "$PORTDIR"
-fi
+ptree_mount()
+{
+	if ! grep -q "$SQUASH_SOURCE" /proc/mounts; then
+		run mount -o ro "$SQUASH_SOURCE" "$PORTDIR"
+	fi
+}
 
 update_aufs()
 {
@@ -77,8 +77,6 @@ update_aufs()
 
 #	run umount "$PORTDIR"
 	run mv "$SQUASH_SOURCE.new" "$SQUASH_SOURCE"
-
-	run mount -o ro "$SQUASH_SOURCE" "$PORTDIR"
 }
 
 # TODO: check if there is enaugh space on tmpfs
@@ -97,29 +95,36 @@ update_copy()
 	run mv $SQUASH_SOURCE /tmp/ # backup
 	run mksquashfs $TMPFS_DEST $SQUASH_SOURCE $SQUASH_OPTS
 	run rm -r $TMPFS_DEST
-
-	run mount -o ro $SQUASH_SOURCE $PORTDIR
-
 }
 
 update()
 {
+	# make sure the old squashfs image is mounted
+	ptree_mount
+
 	if grep -q aufs /proc/filesystems; then
 		update_aufs
 	else
 		update_copy
 	fi
+
+	# mount the new one
+	ptree_mount
 }
 
 usage()
 {
 	cat 1>&2 <<- EOF
-		usage: $0 update
+		usage: $0 (mount/update)
+		  mount:  mounts the image
 		  update: updates the portage tree SquashFS image
 	EOF
 }
 
 case "$1" in
+	mount)
+		ptree_mount
+		;;
 	update)
 		update
 		;;
