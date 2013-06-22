@@ -55,8 +55,9 @@ if ! $(grep -q "$SQUASH_SOURCE" /proc/mounts); then
 	run mount -o ro "$SQUASH_SOURCE" "$PORTDIR"
 fi
 
-
-if grep -q aufs /proc/filesystems; then
+update_aufs()
+{
+	printf "Using AUFS to update...\n"
 
 	run mkdir "$TMPFS/$TMPDIR"
 	run mkdir "$TMPFS_DEST"
@@ -75,12 +76,12 @@ if grep -q aufs /proc/filesystems; then
 	run mv "$SQUASH_SOURCE.new" "$SQUASH_SOURCE"
 
 	run mount -o ro "$SQUASH_SOURCE" "$PORTDIR"
+}
 
-else
 # TODO: check if there is enaugh space on tmpfs
 # TODO: check if there is enaugh ram
-
-
+update_copy()
+{
 	printf "Falling back to the old rsync way\n"
 
 	run rsync -au $PORTDIR $TMPFS_DEST
@@ -96,4 +97,10 @@ else
 
 	run mount -o ro $SQUASH_SOURCE $PORTDIR
 
+}
+
+if grep -q aufs /proc/filesystems; then
+	update_aufs
+else
+	update_copy
 fi
