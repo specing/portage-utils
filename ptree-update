@@ -99,8 +99,28 @@ update_copy()
 
 }
 
-if grep -q aufs /proc/filesystems; then
-	update_aufs
-else
-	update_copy
-fi
+update()
+{
+	if grep -q aufs /proc/filesystems; then
+		update_aufs
+	else
+		update_copy
+	fi
+}
+
+usage()
+{
+	cat 1>&2 <<- EOF
+		usage: $0 update
+		  update: updates the portage tree SquashFS image
+	EOF
+}
+
+case "$1" in
+	update)
+		update
+		;;
+	*)
+		usage
+		;;
+esac
