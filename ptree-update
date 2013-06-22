@@ -8,7 +8,7 @@ PORTDIR="/data/portage/tree/"
 SQUASH_SOURCE="/data/portage/tree.squashfs"
 
 TMPFS="/tmp"
-TMPDIR="portage_tree_rw"
+TMPDIR="${TMPDIR:-/tmp}"
 TMPFS_DEST="/tmp/portage_tree_merge"
 
 # 1 = ask before running every command (do this the first time)
@@ -59,18 +59,21 @@ update_aufs()
 {
 	printf "Using AUFS to update...\n"
 
-	run mkdir "$TMPFS/$TMPDIR"
-	run mkdir "$TMPFS_DEST"
+	local tmp_rw_dir="$TMPDIR/ptree_rw"
+	mkdir -p "$tmp_rw_dir"
 
-	run mount -t aufs treemerge -o "br:$TMPFS/$TMPDIR:$PORTDIR" "$TMPFS_DEST"
+	local tmp_merge_dir="$TMPDIR/ptree_merge"
+	mkdir -p "$tmp_merge_dir"
+
+	run mount -t aufs ptree_merge -o "br:$tmp_rw_dir:$PORTDIR" "$tmp_merge_dir"
 	
-	run PORTDIR="$TMPFS_DEST" emerge --sync --quiet
+	run PORTDIR="$tmp_merge_dir" emerge --sync --quiet
 
-	run mksquashfs "$TMPFS_DEST" "$SQUASH_SOURCE.new" $SQUASH_OPTS
-	run umount "$TMPFS_DEST"
-	run rmdir "$TMPFS_DEST"
+	run mksquashfs "$tmp_merge_dir" "$SQUASH_SOURCE.new" $SQUASH_OPTS
+	run umount "$tmp_merge_dir"
+	run rmdir "$tmp_merge_dir"
 	run umount "$PORTDIR"
-	run rm -r "$TMPFS/$TMPDIR"
+	run rm -r "$tmp_rw_dir"
 
 #	run umount "$PORTDIR"
 	run mv "$SQUASH_SOURCE.new" "$SQUASH_SOURCE"
