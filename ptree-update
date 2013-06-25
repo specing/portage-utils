@@ -11,6 +11,22 @@ TMPFS="/tmp"
 TMPDIR="${TMPDIR:-/tmp}"
 TMPFS_DEST="/tmp/portage_tree_merge"
 
+# Passed to rsync when syncing the tree
+PORTAGE_RSYNC_EXTRA_OPTS="${PORTAGE_RSYNC_EXTRA_OPTS:-"--delete-excluded"}"
+
+# A list of categories that shouldn't be synced and
+# a shorthand for writing "--exclude=/$category" above
+# e.g "gnustep-apps gnustep-base gnustep-libs"
+EXCLUDE_CATEGORIES="${EXCLUDE_CATEGORIES:-""}"
+
+# Mirror used when doing a standalone sync (no emerge available)
+RSYNC_MIRROR="${RSYNC_MIRROR:-"rsync://rsync.gentoo.org/gentoo-portage/"}"
+
+# Passed to standalone rsync method ONLY (same as what emerge passes)
+RSYNC_OPTIONS="${RSYNC_OPTIONS:-"--recursive --links --safe-links --perms \
+ --times --compress --force --whole-file --delete --stats --human-readable \
+ --timeout=180 --exclude=/distfiles --exclude=/local --exclude=/packages"}"
+
 # 1 = ask before running every command (do this the first time)
 # 0 = just do it
 TESTING=1
@@ -53,6 +69,24 @@ ptree_mount()
 	fi
 }
 
+run_sync()
+{
+	local portdir="$1"
+
+	local excludes="$PORTAGE_RSYNC_EXTRA_OPTS"
+	for category in $EXCLUDE_CATEGORIES; do
+		excludes="$excludes --exclude=/$category"
+	done
+
+	if command -v emerge > /dev/null; then
+		printf "Syncing with emerge --sync ...\n"
+		PORTDIR="$portdir" PORTAGE_RSYNC_EXTRA_OPTS="$excludes" emerge --sync --quiet
+	else
+		printf "Unable to find emerge, calling rsync directly ...\n"
+		rsync $RSYNC_OPTIONS "$RSYNC_MIRROR" "$portdir"
+	fi
+}
+
 update_aufs()
 {
 	printf "Using AUFS to update...\n"
@@ -64,8 +98,8 @@ update_aufs()
 	mkdir -p "$tmp_merge_dir"
 
 	run mount -t aufs ptree_merge -o "br:$tmp_rw_dir:$PORTDIR" "$tmp_merge_dir"
-	
-	run PORTDIR="$tmp_merge_dir" emerge --sync --quiet
+
+	run_sync "$tmp_merge_dir"
 
 	run mksquashfs "$tmp_merge_dir" "$SQUASH_SOURCE.new" $SQUASH_OPTS
 	run umount "$tmp_merge_dir"
@@ -86,7 +120,7 @@ update_copy()
 	run rsync -au $PORTDIR $TMPFS_DEST
 	run mount --bind $TMPFS_DEST $PORTDIR
 	
-	run emerge --sync --quiet
+	run_sync "$PORTDIR"
 
 	run umount $PORTDIR # bind mount
 	run umount $PORTDIR # old squashfs
