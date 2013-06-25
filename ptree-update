@@ -1,9 +1,9 @@
 #!/bin/bash
 
-ionice -c 3 -p $$
-renice -n 15 -p $$
+#####################################################################
+# ENVIRONMENT HANDLING / SETTINGS
+#####################################################################
 
-# change this
 PORTDIR="/data/portage/tree/"
 SQUASH_SOURCE="/data/portage/tree.squashfs"
 
@@ -16,6 +16,10 @@ TMPFS_DEST="/tmp/portage_tree_merge"
 TESTING=1
 
 SQUASH_OPTS="-comp xz -b 1M -force-uid portage -force-gid portage"
+
+#####################################################################
+# VARIOUS HELPER FUNCTIONS
+#####################################################################
 
 # for testing purpuses
 run() {
@@ -38,15 +42,9 @@ run() {
 	fi
 }
 
-if ! $(grep -q squashfs /proc/filesystems); then
-	printf "You don't have SquashFS support in /proc/filesystems\n"
-	return 1;
-fi
-
-if ! $(mount | grep -q " $TMPFS .* tmpfs "); then
-	printf "Please ensure %s is a real tmpfs\n" "$TMPFS"
-	return 1;
-fi
+#####################################################################
+# SCRIPT-SPECIFIC FUNCTIONS
+#####################################################################
 
 ptree_mount()
 {
@@ -120,6 +118,27 @@ usage()
 		  update: updates the portage tree SquashFS image
 	EOF
 }
+
+#####################################################################
+# PRE-RUN CHECKS
+#####################################################################
+
+if ! $(grep -q squashfs /proc/filesystems); then
+	printf "You don't have SquashFS support in /proc/filesystems\n"
+	return 1;
+fi
+
+if ! $(mount | grep -q " $TMPFS .* tmpfs "); then
+	printf "Please ensure %s is a real tmpfs\n" "$TMPFS"
+	return 1;
+fi
+
+ionice -c 3 -p $$
+renice -n 15 -p $$
+
+#####################################################################
+# COMMAND-LINE PARSING
+#####################################################################
 
 case "$1" in
 	mount)
