@@ -31,7 +31,8 @@ RSYNC_OPTIONS="${RSYNC_OPTIONS:-"--recursive --links --safe-links --perms \
 # 0 = just do it
 TESTING=1
 
-SQUASH_OPTS="-comp xz -b 1M -force-uid portage -force-gid portage"
+# Passed to mksquashfs
+MKSQUASHFS_OPTS="${MKSQUASHFS_OPTS:-"-comp xz -b 1M -force-uid portage -force-gid portage"}"
 
 #####################################################################
 # VARIOUS HELPER FUNCTIONS
@@ -101,7 +102,8 @@ update_aufs()
 
 	run_sync "$tmp_merge_dir"
 
-	run mksquashfs "$tmp_merge_dir" "$SQUASH_SOURCE.new" $SQUASH_OPTS
+	run mksquashfs "$tmp_merge_dir" "$SQUASH_SOURCE.new" $MKSQUASHFS_OPTS
+
 	run umount "$tmp_merge_dir"
 	run rmdir "$tmp_merge_dir"
 	run umount "$PORTDIR"
@@ -125,7 +127,8 @@ update_copy()
 	run umount $PORTDIR # bind mount
 	run umount $PORTDIR # old squashfs
 	run mv $SQUASH_SOURCE /tmp/ # backup
-	run mksquashfs $TMPFS_DEST $SQUASH_SOURCE $SQUASH_OPTS
+
+	run mksquashfs "$TMPFS_DEST" "$SQUASH_SOURCE" $MKSQUASHFS_OPTS
 	run rm -r $TMPFS_DEST
 }
 
