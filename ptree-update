@@ -38,6 +38,15 @@ MKSQUASHFS_OPTS="${MKSQUASHFS_OPTS:-"-comp xz -b 1M -force-uid portage -force-gi
 # VARIOUS HELPER FUNCTIONS
 #####################################################################
 
+die()
+{
+	printf "\n[the last exit code leading to this death was: %s ]\n" "$?"
+	local retval="$1"
+	shift 1
+	printf "$@"
+	exit "$retval"
+}
+
 # for testing purpuses
 run() {
 	if [[ $TESTING -eq 0 ]]; then
@@ -160,14 +169,12 @@ usage()
 # PRE-RUN CHECKS
 #####################################################################
 
-if ! $(grep -q squashfs /proc/filesystems); then
-	printf "You don't have SquashFS support in /proc/filesystems\n"
-	return 1;
+if ! grep -q squashfs /proc/filesystems; then
+	die 2 "You don't have SquashFS support in /proc/filesystems\n"
 fi
 
-if ! $(mount | grep -q " $TMPFS .* tmpfs "); then
-	printf "Please ensure %s is a real tmpfs\n" "$TMPFS"
-	return 1;
+if ! mount | grep -q " $TMPFS .* tmpfs "; then
+	die $((16+2)) "Please ensure \$TMPFS (%s) is a real tmpfs\n" "$TMPFS"
 fi
 
 ionice -c 3 -p $$
