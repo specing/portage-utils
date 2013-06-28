@@ -128,17 +128,22 @@ update_copy()
 {
 	printf "Falling back to the old rsync way\n"
 
-	run rsync -au $PORTDIR $TMPFS_DEST
-	run mount --bind $TMPFS_DEST $PORTDIR
-	
-	run_sync "$PORTDIR"
+	local tmp_rw_dir="$TMPDIR/ptree_rw"
+	# unsquashfs does the mkdir.
 
-	run umount $PORTDIR # bind mount
-	run umount $PORTDIR # old squashfs
-	run mv $SQUASH_SOURCE /tmp/ # backup
+	unsquashfs -dest "$tmp_rw_dir" "$SQUASH_SOURCE" \
+		|| die 2 "Unable to unpack old SquashFS image:\n  (%s -> %s)\n" "$SQUASH_SOURCE" "$tmp_rw_dir"
+	# unsquashfs doesen't signal an error when -dest already exists, but it still doesen't extract.
+	# @ https://github.com/plougher/squashfs-tools/issues/1
 
-	run mksquashfs "$TMPFS_DEST" "$SQUASH_SOURCE" $MKSQUASHFS_OPTS
-	run rm -r $TMPFS_DEST
+	run run_sync "$tmp_rw_dir"
+
+	run umount "$PORTDIR" # old squashfs
+	run mv "$SQUASH_SOURCE" /tmp/ # backup
+
+	run mksquashfs "$tmp_rw_dir" "$SQUASH_SOURCE" $MKSQUASHFS_OPTS
+
+	run rm -r "$tmp_rw_dir"
 }
 
 update()
