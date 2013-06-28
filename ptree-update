@@ -7,9 +7,7 @@
 PORTDIR="/data/portage/tree/"
 SQUASH_SOURCE="/data/portage/tree.squashfs"
 
-TMPFS="/tmp"
 TMPDIR="${TMPDIR:-/tmp}"
-TMPFS_DEST="/tmp/portage_tree_merge"
 
 # Passed to rsync when syncing the tree
 PORTAGE_RSYNC_EXTRA_OPTS="${PORTAGE_RSYNC_EXTRA_OPTS:-"--delete-excluded"}"
@@ -182,8 +180,8 @@ if ! grep -q squashfs /proc/filesystems; then
 	die 2 "You don't have SquashFS support in /proc/filesystems\n"
 fi
 
-if ! mount | grep -q " $TMPFS .* tmpfs "; then
-	die $((16+2)) "Please ensure \$TMPFS (%s) is a real tmpfs\n" "$TMPFS"
+if ! mount | grep -q " $TMPDIR .* tmpfs "; then
+	die $((16+2)) "Please ensure \$TMPDIR (%s) is a real tmpfs\n" "$TMPDIR"
 fi
 
 #####################################################################
