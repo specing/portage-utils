@@ -188,6 +188,9 @@ fi
 # COMMAND-LINE PARSING
 #####################################################################
 
+# though inconsistently implemented ...
+set -e
+
 case "$1" in
 	mount)
 		ptree_mount
