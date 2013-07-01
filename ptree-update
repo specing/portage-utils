@@ -124,7 +124,7 @@ update_aufs()
 # TODO: check if there is enaugh ram
 update_copy()
 {
-	printf "Falling back to the old rsync way\n"
+	printf "AUFS unavailable, using unsquashfs and a lot of RAM instead\n"
 
 	local tmp_rw_dir="$TMPDIR/ptree_rw"
 	# unsquashfs does the mkdir.
@@ -136,12 +136,13 @@ update_copy()
 
 	run_sync "$tmp_rw_dir"
 
+	mksquashfs "$tmp_rw_dir" "$SQUASH_SOURCE.new" $MKSQUASHFS_OPTS
+	rm -r "$tmp_rw_dir"
+
 	umount "$PORTDIR" # old squashfs
 	mv "$SQUASH_SOURCE" /tmp/ # backup
 
-	mksquashfs "$tmp_rw_dir" "$SQUASH_SOURCE" $MKSQUASHFS_OPTS
-
-	rm -r "$tmp_rw_dir"
+	mv "$SQUASH_SOURCE.new" "$SQUASH_SOURCE"
 }
 
 update()
