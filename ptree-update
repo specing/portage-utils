@@ -105,19 +105,19 @@ update_aufs()
 	local tmp_merge_dir="$TMPDIR/ptree_merge"
 	mkdir -p "$tmp_merge_dir"
 
-	run mount -t aufs ptree_merge -o "br:$tmp_rw_dir:$PORTDIR" "$tmp_merge_dir"
+	mount -t aufs ptree_merge -o "br:$tmp_rw_dir:$PORTDIR" "$tmp_merge_dir"
 
 	run_sync "$tmp_merge_dir"
 
-	run mksquashfs "$tmp_merge_dir" "$SQUASH_SOURCE.new" $MKSQUASHFS_OPTS
+	mksquashfs "$tmp_merge_dir" "$SQUASH_SOURCE.new" $MKSQUASHFS_OPTS
 
-	run umount "$tmp_merge_dir"
-	run rmdir "$tmp_merge_dir"
-	run umount "$PORTDIR"
-	run rm -r "$tmp_rw_dir"
+	umount "$tmp_merge_dir"
+	rmdir "$tmp_merge_dir"
+	umount "$PORTDIR"
+	rm -r "$tmp_rw_dir"
 
 #	run umount "$PORTDIR"
-	run mv "$SQUASH_SOURCE.new" "$SQUASH_SOURCE"
+	mv "$SQUASH_SOURCE.new" "$SQUASH_SOURCE"
 }
 
 # TODO: check if there is enaugh space on tmpfs
