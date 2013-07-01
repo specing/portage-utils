@@ -134,14 +134,14 @@ update_copy()
 	# unsquashfs doesen't signal an error when -dest already exists, but it still doesen't extract.
 	# @ https://github.com/plougher/squashfs-tools/issues/1
 
-	run run_sync "$tmp_rw_dir"
+	run_sync "$tmp_rw_dir"
 
-	run umount "$PORTDIR" # old squashfs
-	run mv "$SQUASH_SOURCE" /tmp/ # backup
+	umount "$PORTDIR" # old squashfs
+	mv "$SQUASH_SOURCE" /tmp/ # backup
 
-	run mksquashfs "$tmp_rw_dir" "$SQUASH_SOURCE" $MKSQUASHFS_OPTS
+	mksquashfs "$tmp_rw_dir" "$SQUASH_SOURCE" $MKSQUASHFS_OPTS
 
-	run rm -r "$tmp_rw_dir"
+	rm -r "$tmp_rw_dir"
 }
 
 update()
