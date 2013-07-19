@@ -4,8 +4,11 @@
 # ENVIRONMENT HANDLING / SETTINGS
 #####################################################################
 
-PORTDIR="/data/portage/tree/"
-SQUASH_SOURCE="/data/portage/tree.squashfs"
+# path to the tree mountpoint
+PORTDIR="${PORTDIR:-/data/portage/tree}"
+
+# path to the tree squashfs image
+SQUASH_SOURCE="${SQUASH_SOURCE:-$PORTDIR.squashfs}"
 
 TMPDIR="${TMPDIR:-/tmp}"
 
@@ -73,7 +76,8 @@ run() {
 ptree_mount()
 {
 	if ! grep -q "$SQUASH_SOURCE" /proc/mounts; then
-		run mount -o ro "$SQUASH_SOURCE" "$PORTDIR"
+		mount -o ro "$SQUASH_SOURCE" "$PORTDIR" \
+			|| die 2 "Unable to mount %s to %s!\n" "$SQUASH_SOURCE" "$PORTDIR"
 	fi
 }
 
